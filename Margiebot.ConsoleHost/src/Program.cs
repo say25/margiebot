@@ -58,7 +58,7 @@ namespace MargieBot.ConsoleHost
 
                 var sayTask = bot.Say(new BotMessage()
                 {
-                    ChatHub = bot.ConnectedDMs.Where(dm => dm.Name.Equals("@jammer", StringComparison.CurrentCultureIgnoreCase)).FirstOrDefault(),
+                    ChatHub = bot.ConnectedDMs.FirstOrDefault(dm => dm.Name.Equals("@jammer", StringComparison.CurrentCultureIgnoreCase)),
                     Text = input
                 });
             }

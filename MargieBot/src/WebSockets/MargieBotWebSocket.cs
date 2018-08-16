@@ -10,8 +10,8 @@ namespace MargieBot.WebSockets
 
     public class MargieBotWebSocket : IDisposable
     {
-        ClientWebSocket _webSocket = null;
-        private static UTF8Encoding _encoding = new UTF8Encoding();
+        ClientWebSocket _webSocket;
+        private static readonly UTF8Encoding Encoding = new UTF8Encoding();
 
         public async Task Connect(string uri)
         {
@@ -37,7 +37,7 @@ namespace MargieBot.WebSockets
 
         public async Task Send(string message)
         {
-            await _webSocket.SendAsync(new ArraySegment<byte>(_encoding.GetBytes(message)), WebSocketMessageType.Text, true, CancellationToken.None);
+            await _webSocket.SendAsync(new ArraySegment<byte>(Encoding.GetBytes(message)), WebSocketMessageType.Text, true, CancellationToken.None);
         }
 
         #region Events
@@ -62,9 +62,9 @@ namespace MargieBot.WebSockets
                 else
                 {
 #if DEBUG
-                    Console.WriteLine($"Receive: {_encoding.GetString(buffer)}");
+                    Console.WriteLine($"Receive: {Encoding.GetString(buffer)}");
 #endif
-                    var data = _encoding.GetString(buffer);
+                    var data = Encoding.GetString(buffer);
                     // TODO: should i be doing this, and if not, what should i do instead?
                     data = TrimStuffIDontKnowWhatItEvenIs(data);
                     OnMessage?.Invoke(this, data);

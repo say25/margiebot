@@ -17,25 +17,26 @@ namespace MargieBot
     public class Bot
     {
         #region Private properties
-        private string _BotNameRegex;
+        private string _botNameRegex;
         private string BotNameRegex
         {
             get
             {
                 // only build the regex if we're connected - if we're not connected we won't know our bot's name or user ID
-                if (_BotNameRegex == string.Empty && IsConnected)
+                if (_botNameRegex == string.Empty && IsConnected)
                 {
-                    _BotNameRegex = new BotNameRegexComposer().ComposeFor(UserName, UserID, Aliases);
+                    _botNameRegex = new BotNameRegexComposer().ComposeFor(UserName, UserID, Aliases);
                 }
 
-                return _BotNameRegex;
+                return _botNameRegex;
             }
-            set { _BotNameRegex = value; }
+            set => _botNameRegex = value;
         }
 
         private Dictionary<string, string> UserNameCache { get; set; } = new Dictionary<string, string>();
         private MargieBotWebSocket WebSocket { get; set; }
-        private string SlackRtmStartHelp = "https://api.slack.com/methods/rtm.start";
+        private const string SlackRtmStartHelp = "https://api.slack.com/methods/rtm.start";
+
         #endregion
 
     #region Public properties
@@ -129,22 +130,25 @@ namespace MargieBot
                     case "not_authed":          
                     case "account_inactive":
                     case "invalid_auth":
-                        InvalidCredentialException exIC = new InvalidCredentialException(errorMessage);
-                        exIC.HelpLink = SlackRtmStartHelp;
-                        throw exIC;
+                        throw new InvalidCredentialException(errorMessage)
+                        {
+                            HelpLink = SlackRtmStartHelp
+                        };
                     case "invalid_arg_name":
                     case "invalid_array_arg":
                     case "invalid_charset":
                     case "invalid_form_data":
                     case "invalid_post_type":
                     case "missing_post_type":
-                        ArgumentException exAE = new ArgumentException(errorMessage);
-                        exAE.HelpLink = SlackRtmStartHelp;
-                        throw exAE;
+                        throw new ArgumentException(errorMessage)
+                        {
+                            HelpLink = SlackRtmStartHelp
+                        };
                     case "request_timeout":
-                        TimeoutException exTE = new TimeoutException(errorMessage);
-                        exTE.HelpLink = SlackRtmStartHelp;
-                        throw exTE;
+                        throw new TimeoutException(errorMessage)
+                        {
+                            HelpLink = SlackRtmStartHelp
+                        };
                     default:
                       throw new Exception(errorMessage);
                 }
@@ -159,8 +163,9 @@ namespace MargieBot
 
             // rebuild the username cache
             UserNameCache.Clear();
-            foreach (JObject userObject in jData["users"])
+            foreach (var jToken in jData["users"])
             {
+                var userObject = (JObject) jToken;
                 UserNameCache.Add(userObject["id"].Value<string>(), userObject["name"].Value<string>());
             }
 
@@ -171,8 +176,9 @@ namespace MargieBot
             // channelz
             if (jData["channels"] != null)
             {
-                foreach (JObject channelData in jData["channels"])
+                foreach (var jToken in jData["channels"])
                 {
+                    var channelData = (JObject) jToken;
                     if (!channelData["is_archived"].Value<bool>() && channelData["is_member"].Value<bool>())
                     {
                         var channel = new SlackChatHub()
@@ -284,19 +290,18 @@ namespace MargieBot
                 else
                 {
                     hub = SlackChatHub.FromID(channelID);
-                    var hubs = new Dictionary<string, SlackChatHub>(ConnectedHubs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value));
-                    hubs.Add(hub.ID, hub);
+                    var hubs = new Dictionary<string, SlackChatHub>(ConnectedHubs.ToDictionary(kvp => kvp.Key, kvp => kvp.Value)) {{hub.ID, hub}};
                     ConnectedHubs = hubs;
                 }
 
                 // some messages may not have text or a user (like unfurled data from URLs)
-                var messageText = (jObject["text"] != null ? jObject["text"].Value<string>() : null);
+                var messageText = jObject["text"]?.Value<string>();
 
                 SlackMessage message = new SlackMessage()
                 {
                     ChatHub = hub,
                     // check to see if bot has been mentioned
-                    MentionsBot = (messageText != null ? Regex.IsMatch(messageText, BotNameRegex, RegexOptions.IgnoreCase) : false),
+                    MentionsBot = (messageText != null && Regex.IsMatch(messageText, BotNameRegex, RegexOptions.IgnoreCase)),
                     RawData = json,
                     Text = messageText,
                     User = (jObject["user"] != null ? new SlackUser() { ID = jObject["user"].Value<string>() } : null)
@@ -360,7 +365,7 @@ namespace MargieBot
             {
                 chatHubID = message.ChatHub.ID;
             }
-            else if (context != null && context.Message.ChatHub != null)
+            else if (context?.Message.ChatHub != null)
             {
                 chatHubID = context.Message.ChatHub.ID;
             }

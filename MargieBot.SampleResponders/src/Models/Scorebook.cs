@@ -7,14 +7,14 @@ namespace MargieBot.SampleResponders.Models
 {
     public class Scorebook
     {
-        private Dictionary<string, int> Scores { get; set; }
-        private string TeamID { get; set; }
+        private Dictionary<string, int> Scores { get; }
+        private string TeamId { get; }
 
-        public Scorebook(string teamID)
+        public Scorebook(string teamId)
         {
             Scores = new Dictionary<string, int>();
-            this.TeamID = teamID;
-            string filePath = GetFilePath();
+            TeamId = teamId;
+            var filePath = GetFilePath();
 
             if (File.Exists(filePath)) {
                 Scores = JsonConvert.DeserializeObject<Dictionary<string, int>>(File.ReadAllText(filePath));
@@ -23,7 +23,7 @@ namespace MargieBot.SampleResponders.Models
 
         private string GetFilePath()
         {
-            return TeamID + ".json";
+            return TeamId + ".json";
         }
 
         public IReadOnlyDictionary<string, int> GetScores()
@@ -31,32 +31,29 @@ namespace MargieBot.SampleResponders.Models
             return new ReadOnlyDictionary<string, int>(Scores);
         }
 
-        public int GetUserScore(string userID)
+        public int GetUserScore(string userId)
         {
-            if (Scores.ContainsKey(userID)) {
-                return Scores[userID];
-            }
-            return 0;
+            return Scores.ContainsKey(userId) ? Scores[userId] : 0;
         }
 
-        public bool HasUserScored(string userID)
+        public bool HasUserScored(string userId)
         {
-            return Scores.ContainsKey(userID);
+            return Scores.ContainsKey(userId);
         }
 
-        public void ScoreUser(string userID, int increment)
+        public void ScoreUser(string userId, int increment)
         {
-            ScoreUsers(new string[] { userID }, increment);
+            ScoreUsers(new[] { userId }, increment);
         }
 
-        public void ScoreUsers(IEnumerable<string> userIDs, int increment)
+        public void ScoreUsers(IEnumerable<string> userIds, int increment)
         {
-            foreach (string userID in userIDs) {
-                if (Scores.ContainsKey(userID)) {
-                    Scores[userID] += increment;
+            foreach (var userId in userIds) {
+                if (Scores.ContainsKey(userId)) {
+                    Scores[userId] += increment;
                 }
                 else {
-                    Scores.Add(userID, increment);
+                    Scores.Add(userId, increment);
                 }
             }
             Save();

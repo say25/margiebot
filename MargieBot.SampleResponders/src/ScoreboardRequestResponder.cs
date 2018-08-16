@@ -16,41 +16,48 @@ namespace MargieBot.SampleResponders
         {
             IReadOnlyDictionary<string, int> scores = context.Get<Scorebook>().GetScores();
 
-            if (scores.Count > 0) {
-                StringBuilder builder = new StringBuilder(context.Get<Phrasebook>().GetScoreboardHype());
+            if (scores.Count > 0)
+            {
+                var builder = new StringBuilder(context.Get<Phrasebook>().GetScoreboardHype());
                 builder.Append("```");
 
                 // add the scores to a list for sorting. while we do, figure out who has the longest name for the pseudo table formatting
-                List<KeyValuePair<string, int>> sortedScores = new List<KeyValuePair<string, int>>();
-                string longestName = string.Empty;
+                var sortedScores = new List<KeyValuePair<string, int>>();
+                var longestName = string.Empty;
 
-                foreach (string key in scores.Keys) {
-                    KeyValuePair<string, int> newScore = new KeyValuePair<string, int>(context.UserNameCache[key], scores[key]);
-                    
-                    if(newScore.Key.Length > longestName.Length) {
+                foreach (var key in scores.Keys)
+                {
+                    var newScore = new KeyValuePair<string, int>(context.UserNameCache[key], scores[key]);
+
+                    if (newScore.Key.Length > longestName.Length)
+                    {
                         longestName = newScore.Key;
                     }
 
                     sortedScores.Add(newScore);
                 }
-                sortedScores.Sort((x, y) => { return y.Value.CompareTo(x.Value); });
+                sortedScores.Sort((x, y) => y.Value.CompareTo(x.Value));
 
-                foreach(KeyValuePair<string, int> userScore in sortedScores)  {
-                    StringBuilder nameString = new StringBuilder(userScore.Key);
-                    while(nameString.Length < longestName.Length) {
+                foreach (var userScore in sortedScores)
+                {
+                    var nameString = new StringBuilder(userScore.Key);
+                    while (nameString.Length < longestName.Length)
+                    {
                         nameString.Append(" ");
                     }
 
-                    builder.Append(nameString.ToString() + " | " + userScore.Value.ToString() + "\n");
+                    builder.Append(nameString + " | " + userScore.Value + "\n");
                 }
 
                 builder.Append("```");
 
-                return new BotMessage() {
+                return new BotMessage()
+                {
                     Text = builder.ToString()
                 };
             }
-            else { return new BotMessage() { Text = "Not a one-of-ya has scored yet. Come on, sleepyheads!" }; }
+
+            return new BotMessage() { Text = "Not a one-of-ya has scored yet. Come on, sleepyheads!" };
         }
     }
 }
